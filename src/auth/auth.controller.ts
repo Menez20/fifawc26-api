@@ -17,14 +17,8 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   googleCallback(@Req() req: Request, @Res() res: Response) {
     const token = this.authService.login(req.user as any);
-    res.cookie('access_token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-    res.redirect(process.env.FRONTEND_URL!);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
   }
-
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   me(@Req() req: Request) {
@@ -33,7 +27,6 @@ export class AuthController {
 
   @Get('logout')
   logout(@Res() res: Response) {
-    res.clearCookie('access_token');
-    res.redirect(process.env.FRONTEND_URL!);
+    res.redirect(process.env.FRONTEND_URL + '/login');
   }
 }
