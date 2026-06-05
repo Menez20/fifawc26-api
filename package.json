@@ -20,6 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@emnapi/core": "^1.10.0",
+    "@emnapi/runtime": "^1.10.0",
     "@neondatabase/serverless": "^1.1.0",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.0.1",
