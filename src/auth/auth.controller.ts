@@ -16,8 +16,12 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   googleCallback(@Req() req: Request, @Res() res: Response) {
-    const token = this.authService.login(req.user as any);
-    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+    const user = req.user as any;
+    const token = this.authService.login(user);
+    const isNewUser = user.isNewUser ? '&newUser=true' : '';
+    res.redirect(
+      `${process.env.FRONTEND_URL}/auth/callback?token=${token}${isNewUser}`,
+    );
   }
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
