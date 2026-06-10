@@ -1,11 +1,23 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { MatchesService } from './matches.service';
+import { PredictionsService } from '../predictions/predictions.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
 export class MatchesController {
-  constructor(private matchesService: MatchesService) {}
+  constructor(
+    private matchesService: MatchesService,
+    private predictionsService: PredictionsService,
+  ) {}
 
   @Get()
   getAll() {
@@ -27,7 +39,6 @@ export class MatchesController {
     return this.matchesService.getMatch(id);
   }
 
-  // Manually trigger a sync (useful for testing)
   @Post('sync')
   sync() {
     return this.matchesService.syncMatches();
