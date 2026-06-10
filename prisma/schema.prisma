@@ -65,18 +65,19 @@ model RoomMember {
 // ─── Matches (synced from football-data.org) ──
 
 model Match {
-  id         String      @id @default(uuid())
-  externalId String      @unique @map("external_id")
-  homeTeam   String      @map("home_team")
-  awayTeam   String      @map("away_team")
-  homeCrest  String?     @map("home_crest")
-  awayCrest  String?     @map("away_crest")
-  stage      String
-  kickoffAt  DateTime    @map("kickoff_at")
-  homeScore  Int?        @map("home_score")
-  awayScore  Int?        @map("away_score")
-  status     MatchStatus @default(SCHEDULED)
-  updatedAt  DateTime    @updatedAt @map("updated_at")
+  id            String      @id @default(uuid())
+  externalId    String      @unique @map("external_id")
+  homeTeam      String      @map("home_team")
+  awayTeam      String      @map("away_team")
+  homeCrest     String?     @map("home_crest")
+  awayCrest     String?     @map("away_crest")
+  stage         String
+  kickoffAt     DateTime    @map("kickoff_at")
+  homeScore     Int?        @map("home_score")
+  awayScore     Int?        @map("away_score")
+  penaltyWinner String?     @map("penalty_winner")
+  status        MatchStatus @default(SCHEDULED)
+  updatedAt     DateTime    @updatedAt @map("updated_at")
 
   predictions Prediction[]
 
@@ -92,11 +93,12 @@ enum MatchStatus {
 // ─── Predictions (mini-game) ──────────────────
 
 model Prediction {
-  id             String   @id @default(uuid())
-  predictedHome  Int      @map("predicted_home")
-  predictedAway  Int      @map("predicted_away")
-  pointsAwarded  Int?     @map("points_awarded")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id                  String   @id @default(uuid())
+  predictedHome       Int      @map("predicted_home")
+  predictedAway       Int      @map("predicted_away")
+  predictedPenaltyWinner String? @map("predicted_penalty_winner")
+  pointsAwarded       Int?     @map("points_awarded")
+  createdAt           DateTime @default(now()) @map("created_at")
 
   userId  String @map("user_id")
   matchId String @map("match_id")
@@ -106,7 +108,6 @@ model Prediction {
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
   room  Room  @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  // one prediction per user per match per room
   @@unique([userId, matchId, roomId])
   @@map("predictions")
 }

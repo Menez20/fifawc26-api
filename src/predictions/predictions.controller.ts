@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { PredictionsService } from './predictions.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { Request } from 'express';
@@ -15,6 +23,7 @@ export class PredictionsController {
     @Body('roomId') roomId: string,
     @Body('predictedHome') predictedHome: number,
     @Body('predictedAway') predictedAway: number,
+    @Body('predictedPenaltyWinner') predictedPenaltyWinner?: string,
   ) {
     const user = req.user as { id: string };
     return this.predictionsService.submit(
@@ -23,6 +32,7 @@ export class PredictionsController {
       roomId,
       predictedHome,
       predictedAway,
+      predictedPenaltyWinner,
     );
   }
 

@@ -16,12 +16,50 @@ export class PredictionsService {
     predictedAway: number,
     actualHome: number,
     actualAway: number,
+    predictedPenaltyWinner?: string | null,
+    actualPenaltyWinner?: string | null,
   ): number {
-    if (predictedHome === actualHome && predictedAway === actualAway) return 3;
-
+    const exactScore =
+      predictedHome === actualHome && predictedAway === actualAway;
     const predictedOutcome = Math.sign(predictedHome - predictedAway);
     const actualOutcome = Math.sign(actualHome - actualAway);
-    if (predictedOutcome === actualOutcome) return 1;
+    const correctOutcome = predictedOutcome === actualOutcome;
+    const isDraw = actualOutcome === 0;
+    const predictedDraw = predictedOutcome === 0;
+
+    // Penalty shootout match
+    if (actualPenaltyWinner) {
+      const correctPenaltyWinner =
+        predictedPenaltyWinner === actualPenaltyWinner;
+      if (exactScore && correctPenaltyWinner) return 9;
+      if (exactScore && !correctPenaltyWinner) return 6;
+      if (predictedDraw && correctPenaltyWinner) return 6;
+      if (predictedDraw && !correctPenaltyWinner) return 3;
+      return 0;
+    }
+
+    // Draw match
+    if (isDraw) {
+      if (exactScore) return 6;
+      if (predictedDraw) return 3;
+      return 0;
+    }
+
+    // Regular match
+    if (exactScore) return 6;
+
+    // Correct winner + correct goals for one team
+    if (
+      correctOutcome &&
+      (predictedHome === actualHome || predictedAway === actualAway)
+    )
+      return 4;
+
+    // Correct winner only
+    if (correctOutcome) return 3;
+
+    // Correct goals for one team (wrong winner)
+    if (predictedHome === actualHome || predictedAway === actualAway) return 1;
 
     return 0;
   }
@@ -32,13 +70,13 @@ export class PredictionsService {
     roomId: string,
     predictedHome: number,
     predictedAway: number,
+    predictedPenaltyWinner?: string,
   ) {
     const match = await this.prisma.match.findUnique({
       where: { id: matchId },
     });
     if (!match) throw new NotFoundException('Match not found');
 
-    // Lock 30 minutes before kickoff
     const lockTime = new Date(match.kickoffAt.getTime() - 30 * 60 * 1000);
     if (new Date() >= lockTime) {
       throw new BadRequestException('Predictions are locked for this match');
@@ -52,8 +90,19 @@ export class PredictionsService {
 
     return this.prisma.prediction.upsert({
       where: { userId_matchId_roomId: { userId, matchId, roomId } },
-      update: { predictedHome, predictedAway },
-      create: { userId, matchId, roomId, predictedHome, predictedAway },
+      update: {
+        predictedHome,
+        predictedAway,
+        predictedPenaltyWinner: predictedPenaltyWinner || null,
+      },
+      create: {
+        userId,
+        matchId,
+        roomId,
+        predictedHome,
+        predictedAway,
+        predictedPenaltyWinner: predictedPenaltyWinner || null,
+      },
     });
   }
 
@@ -91,15 +140,15 @@ export class PredictionsService {
         prediction.predictedAway,
         match.homeScore,
         match.awayScore,
+        prediction.predictedPenaltyWinner,
+        match.penaltyWinner,
       );
 
-      // Save points on prediction
       await this.prisma.prediction.update({
         where: { id: prediction.id },
         data: { pointsAwarded: points },
       });
 
-      // Add points to the user's room score
       await this.prisma.roomMember.update({
         where: {
           roomId_userId: {
